@@ -15,7 +15,7 @@ def parse_package_requirements():
 
 
 setup_args = generate_distutils_setup(
-    packages=['rasberry_perception'],
+    packages=['rasberry_tracking'],
     package_dir={'': 'src'},
     install_requires=parse_package_requirements(),
 )

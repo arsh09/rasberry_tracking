@@ -1,8 +1,8 @@
-# rasberry_perception
+# rasberry_tracking
 
 ![strawberry_localisation](https://user-images.githubusercontent.com/16948324/76231446-2c98b380-621d-11ea-8624-8e472c2f08f8.gif)
 
-The rasberry_perception package aims to interleave ROS and deep learning frameworks for perception. If using any of the models in research please contact [Raymond Kirk](https://github.com/RaymondKirk) to obtain the relevant citation and ensure no conflict of interest.
+The rasberry_tracking package aims to interleave ROS and deep learning frameworks for perception. If using any of the models in research please contact [Raymond Kirk](https://github.com/RaymondKirk) to obtain the relevant citation and ensure no conflict of interest.
 
 ## Quick start
 
@@ -17,8 +17,8 @@ This project is dependent on a modified version of LCAS/bayestracking found at [
 ```bash
 cd catkin_ws/src
 git clone https://github.com/RaymondKirk/bayestracking
-git clone https://github.com/RaymondKirk/rasberry_perception
-catkin build rasberry_perception
+git clone https://github.com/RaymondKirk/rasberry_tracking
+catkin build rasberry_tracking
 ```
 
 ## Detection Backends

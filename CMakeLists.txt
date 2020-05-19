@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(rasberry_perception)
+project(rasberry_tracking)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 add_definitions(-std=c++11)
@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   visualization_msgs
   message_generation
+  rasberry_perception
   bayes_tracking  # Must be the version from the github.com/RaymondKirk/bayes_tracking repo
 )
 
@@ -22,7 +23,7 @@ find_package(Boost REQUIRED COMPONENTS thread)
 # ==============================================
 # Python scripts setup
 # ==============================================
-if(DEFINED ENV{INSTALL_RASBERRY_PERCEPTION_PYTHON_FROM_PIP})
+if(DEFINED ENV{INSTALL_RASBERRY_TRACKING_PYTHON_FROM_PIP})
     # Install python dependancies (first try to install locally, then to user site_packages)
     find_package(PythonInterp REQUIRED)
     set(return_status "1")
@@ -50,27 +51,15 @@ catkin_python_setup()
 # ==============================================
 # Service/Message files setup
 # ==============================================
-add_service_files(
-  FILES
-  GetDetectorResults.srv
-)
+# add_service_files(FILES)
 
-add_message_files(
-    FILES
-    Detection.msg
-    Detections.msg
-    RegionOfInterest.msg
-    SegmentOfInterest.msg
-    ServiceStatus.msg
-    TaggedPose.msg
-    TaggedPoseStampedArray.msg
-)
+# add_message_files(FILES)
 
-generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs visualization_msgs rasberry_perception)
+generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs visualization_msgs rasberry_perception rasberry_tracking)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp tf std_msgs sensor_msgs geometry_msgs visualization_msgs bayes_tracking
+  CATKIN_DEPENDS roscpp tf std_msgs sensor_msgs geometry_msgs visualization_msgs bayes_tracking rasberry_perception
 )
 
 # ==============================================
@@ -78,16 +67,16 @@ catkin_package(
 # ==============================================
 
 include_directories( include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
-add_executable(${PROJECT_NAME}_tracking src/${PROJECT_NAME}/tracking/tracking.cpp )
-add_dependencies(${PROJECT_NAME}_tracking ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_tracking ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
+add_executable(${PROJECT_NAME}_tracker src/${PROJECT_NAME}/tracking.cpp )
+add_dependencies(${PROJECT_NAME}_tracker ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_tracker ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 
 # ==============================================
 # Install
 # ==============================================
 
-install(TARGETS ${PROJECT_NAME}_tracking ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION} )
-install(DIRECTORY include/${PROJECT_NAME}/tracking/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION} FILES_MATCHING PATTERN "*.hpp" PATTERN ".git" EXCLUDE )
+install(TARGETS ${PROJECT_NAME}_tracker ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION} )
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION} FILES_MATCHING PATTERN "*.hpp" PATTERN ".git" EXCLUDE )
 
 install(DIRECTORY "launch" "config" DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 

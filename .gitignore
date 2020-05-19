@@ -2,6 +2,8 @@
 **/*.bag
 **/*.xz
 /docker_export
+**/delete_me
+**/data
 **/*.pkl
 
 ### Intellij ###

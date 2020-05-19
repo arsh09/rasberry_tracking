@@ -1,5 +1,5 @@
 /**
- * ROS Node used to interact with baysian tracker
+ * ROS Node used to interact with bayesian tracker
  * based on bayes_people_tracker <https://github.com/strands-project/strands_perception_people/>
  * by Christian Dondrup <cdondrup@lincoln.ac.uk>
  * 
