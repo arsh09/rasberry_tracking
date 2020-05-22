@@ -2,6 +2,9 @@
 
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
+from tqdm import tqdm
+
+import pathlib
 import pickle
 
 import cv2
@@ -13,6 +16,29 @@ from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import String
 import tf2_ros
 from rasberry_perception.detection.compat import input
+import numpy as np
+from tqdm import tqdm
+
+
+def package_for_py3():
+    dataset_name = "pico_2019_10_11"
+    root = (pathlib.Path(__file__).parent / dataset_name).resolve()
+    files = sorted(list(str(s) for s in root.glob("*.pkl")))
+    output_folder = root.parent / (dataset_name + "_python3_files")
+    output_folder.mkdir()
+
+    for idx, pickled_file in tqdm(enumerate(files)):
+        with open(pickled_file, "r") as fh:
+            data = pickle.load(fh)
+
+        rgb_image = ros_numpy.numpify(data["rgb"]["image"])
+        depth_image = ros_numpy.numpify(data["aligned_depth_to_rgb"]["image"])
+        camera_info = data["aligned_depth_to_rgb"]["intrinsics"].P
+        intrinsics = [camera_info[0], camera_info[5], camera_info[2], camera_info[6]]
+
+        np.save(str(output_folder / "{0:05}.png".format(idx)),
+                    {"rgb_image": rgb_image, "depth_image": depth_image, "intrinsics": intrinsics})
+
 
 
 def __main():
@@ -27,11 +53,12 @@ def __main():
 
     files = sorted(list(str(s) for s in root.glob("*.pkl")))
 
-    fps = 15
-    loop = True
-    seconds_limit = 20
+    fps = 3
+    loop = False
+    on_demand = False
+    seconds_limit = 20000
     repeat_frames = 1
-    warmup_frames = 0
+    warmup_frames = 3
     frame_limit = int(fps * seconds_limit)
     frame_limit = frame_limit if frame_limit < len(files) else len(files)
     seconds_limit = frame_limit / fps
@@ -41,16 +68,16 @@ def __main():
                                                                                  fps))
     files = files[:frame_limit]
 
-    ram_files = []
-    print("Loading files into RAM")
-    from tqdm import tqdm
+    if on_demand:
+        ram_files = []
+        print("Loading files into RAM")
 
-    for file in tqdm(files):
-        with open(file, "r") as fh:
-            data = pickle.load(fh)
-        ram_files.append(data)
-        # if len(ram_files) > 5:
-        #     break
+        for file in tqdm(files):
+            with open(file, "r") as fh:
+                data = pickle.load(fh)
+            ram_files.append(data)
+            # if len(ram_files) > 5:
+            #     break
 
     rospy.init_node("sequence_publisher", anonymous=True)
     hz = rospy.Rate(fps)
@@ -91,7 +118,10 @@ def __main():
             input("\nStart? [enter]: ")
         start = timer()
 
-        for frame_idx, data in enumerate(ram_files):
+        for frame_idx, data in tqdm(enumerate(ram_files if on_demand else files)):
+            if not on_demand:
+                with open(data, "r") as fh:
+                    data = pickle.load(fh)
             if rospy.is_shutdown():
                 break
 
