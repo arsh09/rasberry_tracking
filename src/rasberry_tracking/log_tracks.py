@@ -3,19 +3,17 @@
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
 from collections import defaultdict
-from copy import deepcopy
-
-import pathlib
-import ros_numpy
-import rospy
-from std_msgs.msg import String
+from datetime import datetime
+from threading import Event
 
 import cv2
 import numpy as np
-
+import pathlib
+import ros_numpy
+import rospy
 from rasberry_perception.detection.utility import function_timer
 from rasberry_perception.msg import Detections
-from threading import Event
+from std_msgs.msg import String
 
 
 class TrackLogs:
@@ -28,6 +26,7 @@ class TrackLogs:
 
         if bbox_save_dir:
             self.save_dir = bbox_save_dir
+            pathlib.Path(self.save_dir).mkdir()
             self.write_bbox_sub = rospy.Subscriber("/rasberry_perception/tracking/detection_results_array",
                                                    Detections, self._bbox_write_callback, queue_size=200)
         self._plot = bool(plot_tracks_file)
@@ -125,7 +124,7 @@ class TrackLogs:
 def __log_unique_tracks():
     rospy.init_node('rasberry_tracking_logs', anonymous=True)
     reset_on = "/sequence_0/info"
-    bbox_save_dir = "data"
+    bbox_save_dir = "output/tracking_data/{}".format(datetime.now().strftime("%d%m%y-%M%S"))
     plot_tracks_file = ""  # "tracks.gif"
     tracer = TrackLogs(bbox_save_dir, reset_on, plot_tracks_file)
     tracer.spin()
