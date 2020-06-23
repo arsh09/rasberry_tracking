@@ -11,7 +11,7 @@ import numpy as np
 import pathlib
 import ros_numpy
 import rospy
-from rasberry_perception.detection.utility import function_timer
+from rasberry_perception.utility import function_timer
 from rasberry_perception.msg import Detections
 from std_msgs.msg import String
 

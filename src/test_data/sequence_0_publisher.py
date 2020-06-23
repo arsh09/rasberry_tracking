@@ -15,7 +15,7 @@ from geometry_msgs.msg import Pose
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import String
 import tf2_ros
-from rasberry_perception.detection.compat import input
+from rasberry_perception.compat import input
 import numpy as np
 from tqdm import tqdm
 
