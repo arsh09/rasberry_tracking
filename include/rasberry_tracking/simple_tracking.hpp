@@ -230,7 +230,7 @@ public:
     }
 
     void addObservation(std::string detector_name, const std::vector<geometry_msgs::Point>& obsv, double obsv_time,
-                        std::vector<std::string> tags, std::vector<int> detection_ids) {
+                        std::vector<std::string> tags, std::vector<int> detection_ids, std::vector<std::vector<double>> reid_features) {
         boost::mutex::scoped_lock lock(mutex);
         ROS_DEBUG("Adding new observations for detector: %s", detector_name.c_str());
         // add last observation/s to tracker
@@ -261,7 +261,13 @@ public:
                 (*observation)[1] = sqrt(pow(li.x, 2) + pow(li.y, 2)); // range
             }
 
-            if (!tags.empty() && count < tags.size()) {
+            if (!tags.empty() && count < tags.size() && !reid_features.empty() && count < reid_features.size()) {
+                mtrk.addObservation(*observation, obsv_time, tags[count], detection_ids[count], reid_features[count]);
+            }
+            else if (!reid_features.empty() && count < reid_features.size()) {
+                mtrk.addObservation(*observation, obsv_time, detection_ids[count], reid_features[count]);
+            }
+            else if (!tags.empty() && count < tags.size()) {
                 mtrk.addObservation(*observation, obsv_time, tags[count], detection_ids[count]);
             }
             else {

@@ -326,14 +326,19 @@ void Tracking::trackingThread() {
             std::map<long, long> id_to_track_id = std::get<1>(tracks);
 
             std::map<long, rasberry_perception::Detection> id_to_last_det;
+            _callback_copy_mutex.lock(); // Lock from detector callback reassigning data until done
             for(auto & last_det : this->last_detections_msg_.objects) {
                 id_to_last_det[last_det.id] = last_det;
             }
+            _callback_copy_mutex.unlock();
 
             if (!detections.empty()) {
                 ros::Time now =  ros::Time::now();
                 // Publish the markers that are currently visible
+                _callback_copy_mutex.lock();
                 rasberry_perception::Detections non_occluded_results = this->last_detections_msg_;
+                _callback_copy_mutex.unlock(); // Detector callback can now assign data
+
                 non_occluded_results.camera_frame.header.frame_id = this->target_frame;
                 non_occluded_results.camera_frame.header.stamp = now;
                 non_occluded_results.camera_info.header.frame_id = this->target_frame;
@@ -489,9 +494,12 @@ void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr 
 
     // Set last header to the most recent detection header
     this->last_header_ = detections.camera_info.header;
+    _callback_copy_mutex.lock(); // TODO: Make the last_detections_msg read/write thread safe, mutex logic is hacky
     this->last_detections_msg_ = detections;
+    _callback_copy_mutex.unlock();
 
-    std::vector<geometry_msgs::Point> position;
+    std::vector<geometry_msgs::Point> positions;
+    std::vector<std::vector<double>> reid_features;
     std::vector<std::string> tags;
     std::vector<int> detection_ids;
 
@@ -523,7 +531,9 @@ void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr 
             return;
         }
 
-        position.push_back(pose_in_target_coords.pose.position);
+        positions.push_back(pose_in_target_coords.pose.position);
+        reid_features.push_back(object.reid_logits);
+
         detection_ids.push_back(object.id);
 
         if (_use_tags[detector]) {
@@ -531,13 +541,16 @@ void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr 
         }
     }
 
-    if (!position.empty()) {
+    if (!positions.empty()) {
         if(ekf != nullptr) {
-            ekf->addObservation(detector, position, this->last_header_.stamp.toSec(), tags, detection_ids);
+            ekf->addObservation(detector, positions, this->last_header_.stamp.toSec(), tags, detection_ids,
+                    reid_features);
         } else if (ukf != nullptr) {
-            ukf->addObservation(detector, position, this->last_header_.stamp.toSec(), tags, detection_ids);
+            ukf->addObservation(detector, positions, this->last_header_.stamp.toSec(), tags, detection_ids,
+                    reid_features);
         } else if (pf != nullptr) {
-            pf->addObservation(detector, position, this->last_header_.stamp.toSec(), tags, detection_ids);
+            pf->addObservation(detector, positions, this->last_header_.stamp.toSec(), tags, detection_ids,
+                    reid_features);
         }
     }
 }
@@ -575,6 +588,7 @@ void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception:
     std::vector<geometry_msgs::Point> position;
     std::vector<std::string> tags;
     std::vector<int> detection_ids; // Fill with seq because tagged poses do not have IDS for each detection
+    std::vector<std::vector<double>> reid_features; // Leave empty because tagged poses do not have reid_features for each detection
 
     for (int i = 0; i < results->poses.size(); i++) {
         rasberry_perception::TaggedPose pt = results->poses[i];
@@ -614,12 +628,12 @@ void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception:
     if (!position.empty()) {
         if (ekf == nullptr) {
             if (ukf == nullptr) {
-                pf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids);
+                pf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids, reid_features);
             } else {
-                ukf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids);
+                ukf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids, reid_features);
             }
         } else {
-            ekf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids);
+            ekf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids, reid_features);
         }
     }
 }
