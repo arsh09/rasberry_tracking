@@ -55,7 +55,7 @@ catkin_python_setup()
 
 # add_message_files(FILES)
 
-generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs visualization_msgs rasberry_tracking rasberry_perception)
+# generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs visualization_msgs rasberry_tracking rasberry_perception)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -66,9 +66,10 @@ catkin_package(
 # Build
 # ==============================================
 
-include_directories( include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
 add_executable(${PROJECT_NAME} src/${PROJECT_NAME}/tracking.cpp )
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 
 # ==============================================
