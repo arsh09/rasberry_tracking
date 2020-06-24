@@ -8,7 +8,7 @@ The rasberry_tracking package to add tracking functionality to
 ## Quick start
 
 ```bash
-roslaunch rasberry_perception detector.launch backend:="detectron2" password:="obtain_from_raymond" image_ns:="/your_camera/colour" depth_ns:="/your_camera/depth" score:="0.5"
+roslaunch rasberry_tracking detector.launch backend:="fruit_reid" password:="obtain_from_raymond" image_ns:="/your_camera/colour" depth_ns:="/your_camera/depth" score:="0.5"
 ```
 
 ## Installation
