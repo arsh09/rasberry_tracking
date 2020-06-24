@@ -37,6 +37,7 @@
 #include <visualization_msgs/MarkerArray.h>
 
 #include <math.h>
+#include <mutex>
 #include <ros/ros.h>
 #include <ros/time.h>
 #include <string.h>
@@ -85,6 +86,8 @@ private:
     SimpleTracking<UKFilter> *ukf{}; //= NULL;
     std::map<std::string, bool> _use_tags; // <detector name, use tags>
     std::vector<ros::Subscriber> subs; //A store to keep the subscriber objects alive
+
+    std::mutex _callback_copy_mutex;
 };
 
 #endif // BTRACKING_H
