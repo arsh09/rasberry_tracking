@@ -46,12 +46,12 @@ class FruitReidServer(Detectron2Server):
 
         try:
             image = ros_numpy.numpify(request.image)
-            # TODO: Do all as a single batch
-            for detection in response.results.objects:
-                x1, x2, y1, y2 = [int(getattr(detection.roi, o)) for o in ["x1", "x2", "y1", "y2"]]
-                feature_vector, classifier = self.feature_extractor(image[y1:y2, x1:x2])
-                detection.reid_vector = feature_vector.ravel()
-                detection.reid_logits = classifier.ravel()
+            bboxes = [[int(getattr(d.roi, o)) for o in ["x1", "x2", "y1", "y2"]] for d in response.results.objects]
+            batched_images = [image[y1:y2, x1:x2] for x1, x2, y1, y2 in bboxes]
+            feature_vectors, logits = self.feature_extractor(batched_images)
+            for batch_idx, detection in enumerate(response.results.objects):
+                detection.reid_vector = feature_vectors[batch_idx].ravel()
+                detection.reid_logits = logits[batch_idx].ravel()
         except Exception as e:
             print("FruitReidServer error: ", e)
             response.status.ERROR = True
