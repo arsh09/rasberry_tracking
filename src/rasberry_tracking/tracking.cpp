@@ -61,7 +61,7 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
     private_nh.param("pose_results_array", pub_topic_pose_results_array, std::string("/rasberry_perception/tracking/pose_array"));
     private_nh.param("marker_array", pub_topic_marker_array, std::string("/rasberry_perception/tracking/marker_array"));
     private_nh.param("detection_marker_array", pub_topic_detection_marker_array, std::string("/rasberry_perception/tracking/detection_marker_array"));
-    private_nh.param("tracker_frequency", this->tracker_frequency, double(30.0));
+    private_nh.param("tracker_frequency", this->tracker_frequency, double(6));
     private_nh.param("reset_on", reset_on_topic, std::string(""));
 
     if (parseParams(private_nh) == -1) {
@@ -306,10 +306,12 @@ static map<V, K> reverse_map(const map<K, V>& m) {
 }
 
 void Tracking::trackingThread() {
-    ros::Rate fps(tracker_frequency);
     double time_sec = 0.0;
 
     while (ros::ok()) {
+        // Dynamically update the tracker frequency every iteration
+        ros::Rate tracker_rate_fps(this->tracker_frequency);
+
         std::map<long, std::string> tags;
         try {
             // Results from the tracked objects thread (detectorCallback)
@@ -400,15 +402,15 @@ void Tracking::trackingThread() {
                 }
             }
 
-            fps.sleep();
+            tracker_rate_fps.sleep();
         }
         catch (Bayesian_filter::Numeric_exception &e) {
             ROS_INFO_STREAM("Exception: " << e.what());
-            fps.sleep();
+            tracker_rate_fps.sleep();
         }
         catch (std::exception &e) {
             ROS_INFO_STREAM("Exception: " << e.what());
-            fps.sleep();
+            tracker_rate_fps.sleep();
         }
     }
 }
@@ -484,8 +486,30 @@ visualization_msgs::MarkerArray Tracking::createVisualisationMarkers(const rasbe
     return marker_array;
 }
 
+// Logs the frequency of incoming detections/poses to dynamically update tracker_frequency
+void Tracking::frequencyUpdate() {
+    double now = ros::Time::now().toSec();
+    double elapsed = now - this->last_detection_received_time;
+
+    // Only add to the vector if not the first time ran (elapsed will be large)
+    if(this->last_detection_received_time != 0)
+        this->actual_frequencies.push(elapsed);
+    this->last_detection_received_time = now;
+
+    if(!this->actual_frequencies.empty()) {
+        double actual_frequency = 1.0 / this->actual_frequencies.average();
+        double frequency_error = this->tracker_frequency - actual_frequency;
+        if(std::abs(frequency_error) >= 0.5) {
+            ROS_INFO("Tracking frequency is set at %f hz but actually operating at %s%f hz. Setting to %f",
+                    this->tracker_frequency, (frequency_error > 0) ? "+" : "", frequency_error, actual_frequency);
+            this->tracker_frequency = actual_frequency;
+        }
+    }
+}
+
 void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr &results,
                                 const std::string &detector) {
+    this->frequencyUpdate();
     if(results->objects.empty()) {
         return;
     }
@@ -506,7 +530,7 @@ void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr 
     for (auto & object : detections.objects) {
         geometry_msgs::Pose pt = object.pose;
         if(object.pose_frame_id.empty()) {
-            ROS_WARN("Detection %ld pose_frame_id is empty. Skipping object.", object.id);
+            ROS_DEBUG("Detection %ld pose_frame_id is empty. Skipping object.", object.id);
             continue;
         }
 
@@ -579,8 +603,10 @@ void Tracking::detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPt
     this->detectorCallbackTaggedPoseStampedArray(const_tagged_res, detector);
 }
 
+
 void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception::TaggedPoseStampedArray::ConstPtr &results,
                                                const std::string &detector) {
+    this->frequencyUpdate();
     if (results->poses.empty()) {
         return;
     }
@@ -637,7 +663,6 @@ void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception:
         }
     }
 }
-
 
 void Tracking::resetCallback(const std_msgs::String::ConstPtr &reset_reason) {
     ROS_INFO_STREAM("Resetting detector due to: " << reset_reason->data);

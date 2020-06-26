@@ -38,6 +38,7 @@
 
 #include <math.h>
 #include <mutex>
+#include <queue>
 #include <ros/ros.h>
 #include <ros/time.h>
 #include <string.h>
@@ -45,7 +46,38 @@
 #include <tf/transform_listener.h>
 #include <vector>
 #include <XmlRpcValue.h>
+#include <type_traits>
 
+template <typename T, int MaxLen>
+class FixedVector : public std::vector<T> {
+public:
+    bool is_full() {
+        return this->size() == MaxLen;
+    }
+
+    void pop_front(std::vector<T>& vec)
+    {
+        assert(!vec.empty());
+        vec.erase(vec.begin());
+    }
+
+    void push(const T& value) {
+        if (this->size() == MaxLen) {
+            assert(!this->empty());
+            this->erase(this->begin());
+        }
+        std::vector<T>::push_back(value);
+    }
+
+    T average() {
+        if(!std::is_arithmetic<T>::value)
+           return T();
+        T sum;
+        for(auto it = this->begin(); it != this->end(); ++it)
+            sum += *it;
+        return sum / this->size();
+    }
+};
 
 class Tracking {
 public:
@@ -64,6 +96,7 @@ private:
 
     visualization_msgs::MarkerArray createVisualisationMarkers(const rasberry_perception::Detections& poses);
 
+    void frequencyUpdate();
     void detectorCallback(const rasberry_perception::Detections::ConstPtr &results, const std::string& detector);
     void detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPtr &results, const std::string& detector);
     void detectorCallbackTaggedPoseStampedArray(const rasberry_perception::TaggedPoseStampedArray::ConstPtr &results, const std::string& detector);
@@ -76,7 +109,11 @@ private:
     rasberry_perception::Detections last_detections_msg_;
     std_msgs::Header last_header_;
     std::string target_frame, startup_time_str;
-    double tracker_frequency{};
+
+    // Parameters for the refresh rate of tracking
+    double tracker_frequency; // initial frequency to run at
+    FixedVector<double, 30> actual_frequencies;
+    double last_detection_received_time; // when was the last message received
     double startup_time;
 
     unsigned long detect_seq;
