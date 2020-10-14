@@ -2,6 +2,6 @@
 #  Email: ray.tunstill@gmail.com
 
 # Import all the interfaces here so that they're all registered
-from .fruit_tracking import FruitReidServer
+from .deepsort import DeepSortServer
 
-__all__ = ["FruitReidServer"]
+__all__ = ["DeepSortServer"]

@@ -7,13 +7,13 @@ from __future__ import absolute_import, division, print_function
 
 import ros_numpy
 
-from rasberry_perception.interfaces.detectron2 import Detectron2Server
+from rasberry_perception.interfaces.fruitcast import FruitCastServer
 from rasberry_perception.interfaces.registry import DETECTION_REGISTRY
 from rasberry_perception.utility import function_timer
 
 
-@DETECTION_REGISTRY.register_detection_backend("fruit_reid")
-class FruitReidServer(Detectron2Server):
+@DETECTION_REGISTRY.register_detection_backend("deepsort")
+class DeepSortServer(FruitCastServer):
     def __init__(self, config_file, det_config_file, model_file=None, det_model_file=None):
         # Import fruit_tracking repo
         try:
@@ -36,15 +36,16 @@ class FruitReidServer(Detectron2Server):
         self.feature_extractor = FeatureExtractor(self.cfg)
 
         # Configure the detectron2 model to provide bounding boxes
-        super(FruitReidServer, self).__init__(det_config_file, det_model_file)
+        super(DeepSortServer, self).__init__(det_config_file, det_model_file)
 
     @function_timer.interval_logger(interval=10)
     def get_detector_results(self, request):
-        response = super(FruitReidServer, self).get_detector_results(request)
+        response = super(DeepSortServer, self).get_detector_results(request)
         if not response.status.OKAY or len(response.results.objects) == 0:
             return response
 
         try:
+            # TODO: Run DeepSort tracker here not only feature extractor
             image = ros_numpy.numpify(request.image)
             bboxes = [[int(getattr(d.roi, o)) for o in ["x1", "x2", "y1", "y2"]] for d in response.results.objects]
             batched_images = [image[y1:y2, x1:x2] for x1, x2, y1, y2 in bboxes]
@@ -53,7 +54,7 @@ class FruitReidServer(Detectron2Server):
                 detection.reid_vector = feature_vectors[batch_idx].ravel()
                 detection.reid_logits = logits[batch_idx].ravel()
         except Exception as e:
-            print("FruitReidServer error: ", e)
+            print("DeepSortServer error: ", e)
             response.status.ERROR = True
             response.status.OKAY = False
 
