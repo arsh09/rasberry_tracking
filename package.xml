@@ -27,7 +27,7 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>visualization_msgs</build_depend>
-  <build_depend>bayes_tracking</build_depend>
+  <build_depend>rays_bayes_tracking</build_depend>
   <build_depend>tf</build_depend>
 
   <!-- Core dependencies -->
@@ -40,8 +40,16 @@
   <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>ros_numpy</exec_depend>
-  <exec_depend>bayes_tracking</exec_depend>
+  <exec_depend>rays_bayes_tracking</exec_depend>
   <exec_depend>rasberry_perception</exec_depend>
+
+  <!-- Extra 3rd party dependencies in lib/ (to play nice with rosdep) -->
+  <build_depend>boost</build_depend>
+  <build_depend>libblas-dev</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <exec_depend>boost</exec_depend>
+  <exec_depend>libblas-dev</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
 
   <!-- Python dependencies  -->
   <exec_depend version_gte="1.13.3">python-numpy</exec_depend>

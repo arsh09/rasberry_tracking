@@ -13,11 +13,8 @@ roslaunch rasberry_tracking detector.launch backend:="fruit_reid" password:="obt
 
 ## Installation
 
-This project is dependent on a modified version of LCAS/bayestracking found at [RaymondKirk/bayestracking](https://github.com/RaymondKirk/bayestracking). 
-
 ```bash
 cd catkin_ws/src
-git clone https://github.com/RaymondKirk/bayestracking
 git clone https://github.com/RaymondKirk/rasberry_tracking
 catkin build rasberry_tracking
 ```

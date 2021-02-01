@@ -1,22 +1,28 @@
 cmake_minimum_required(VERSION 2.8.3)
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_COLOR_MAKEFILE   ON)
+
+add_subdirectory(lib/bayestracking)
+
 project(rasberry_tracking)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 add_definitions(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  tf
-  ros_numpy
-  std_msgs
-  sensor_msgs
-  geometry_msgs
-  visualization_msgs
-  message_generation
-  rasberry_perception
-  bayes_tracking  # Must be the version from the github.com/RaymondKirk/bayes_tracking repo
-)
+        roscpp
+        rospy
+        tf
+        ros_numpy
+        std_msgs
+        sensor_msgs
+        geometry_msgs
+        visualization_msgs
+        message_generation
+        rasberry_perception
+        rays_bayes_tracking  # Must be the version from the github.com/RaymondKirk/bayes_tracking repo
+        )
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -31,7 +37,7 @@ if(DEFINED ENV{INSTALL_RASBERRY_TRACKING_PYTHON_FROM_PIP})
     foreach(flag "" "--user")
         set(command "pip install -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt ${flag}")
         execute_process (COMMAND bash -c "${command}" OUTPUT_VARIABLE output_var ERROR_VARIABLE error_var
-                         RESULT_VARIABLE return_status)
+                RESULT_VARIABLE return_status)
         message(WARNING "${command}Not a warning just output of pip install dependancies:\n${output_var}")
 
         if(return_status EQUAL "0")
@@ -58,8 +64,8 @@ catkin_python_setup()
 # generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs visualization_msgs rasberry_tracking rasberry_perception)
 
 catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp tf std_msgs sensor_msgs geometry_msgs visualization_msgs bayes_tracking rasberry_perception
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        CATKIN_DEPENDS roscpp tf std_msgs sensor_msgs geometry_msgs visualization_msgs rays_bayes_tracking rasberry_perception
 )
 
 # ==============================================
@@ -67,7 +73,7 @@ catkin_package(
 # ==============================================
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
-add_executable(${PROJECT_NAME} src/${PROJECT_NAME}/tracking.cpp )
+add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}/tracking.cpp )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 #add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
@@ -77,15 +83,15 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 # ==============================================
 
 install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
 
-install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION} FILES_MATCHING PATTERN "*.hpp" PATTERN ".git" EXCLUDE )
+install(DIRECTORY i${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION} FILES_MATCHING PATTERN "*.hpp" PATTERN ".git" EXCLUDE )
 
-install(DIRECTORY "launch" "config" DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/launch" "${CMAKE_CURRENT_SOURCE_DIR}/config" DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-file(GLOB python_scripts_DIR "scripts/*.py")
-file(GLOB bash_scripts_DIR "scripts/*.sh")
+file(GLOB python_scripts_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.py")
+file(GLOB bash_scripts_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.sh")
 catkin_install_python(PROGRAMS ${python_scripts_DIR} ${bash_scripts_DIR} DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
