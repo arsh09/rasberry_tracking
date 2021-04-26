@@ -11,6 +11,8 @@ The rasberry_tracking package to add tracking functionality to
 roslaunch rasberry_tracking detector.launch backend:="fruit_reid" password:="obtain_from_raymond" image_ns:="/your_camera/colour" depth_ns:="/your_camera/depth" score:="0.5"
 ```
 
+To launch tracking please see `launch/tracker.launch`.
+
 ## Installation
 
 ```bash

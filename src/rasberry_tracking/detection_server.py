@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#  Raymond Kirk (Tunstill) Copyright (c) 2020
+#  Raymond Kirk (Tunstill) Copyright (c) 2021
 #  Email: ray.tunstill@gmail.com
 
 # Calls the detection service in rasberry_perception but allows interfaces in rasberry_tracking to be used also
