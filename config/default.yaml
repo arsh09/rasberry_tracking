@@ -11,7 +11,7 @@ detectors: # Add detectors under this namespace, don't change to be compatible w
     #   topic (str): rasberry_perception/detections.msg (enables *-LABELED matching algorithms and transparent association)
     #   tagged_topic (str): rasberry_perception/TaggedPoseStampedArray.msg (enables *-LABELED matching algorithms)
     #   pose_topic (str): geometry_msgs/PoseArray.msg (basic positional based tracking)
-    topic: "/rasberry_perception/results"
+    topic: "/rasberry_perception_camera2_detector/results"
     cartesian_noise_params:                                     # Expected noise in the poses (how good is the localisation)
       x: 0.0025
       y: 0.0025
